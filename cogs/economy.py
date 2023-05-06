@@ -202,14 +202,21 @@ class Economy(commands.Cog):
                 await db.commit()
                 await ctx.respond(f"You have finished baking {amount * 1.5} donuts")
                 return
+            if Baking[3] < time.time() + 350 and Baking[3] > time.time() - 350:
+                amountgiving = Baking[1] * 1.5
+                await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
+                await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
+                await db.commit()
+                await ctx.respond(f"You have finished baking but you just missed the perfect moment. You made {amount * 1.2} donuts")
+                return
             #if the food is taken out to soon give the user nothing and remove the collum from the database. Tell them they took it out to soon
-            if Baking[3] < time.time():
+            if Baking[3] > time.time():
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
                 await ctx.respond(f"You took out your food to soon and it raw. You made no donuts")
                 return
             #if the food is taken out to late give the user nothing and remove the collum from the database. Tell them they took it out to soon
-            if Baking[3] > time.time():
+            if Baking[3] < time.time():
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
                 await ctx.respond(f"You took out your food to late and it burnt. You made no donuts")
