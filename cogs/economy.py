@@ -15,6 +15,7 @@ class Economy(commands.Cog):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             await db.execute("CREATE TABLE IF NOT EXISTS economy (UserID INT, Money Float, Daily INT)")
             await db.commit()
+            await db.execute("Drop TABLE IF EXISTS Baking")
             await db.execute("CREATE TABLE IF NOT EXISTS Baking (UserID INT, Amount_Baking,TimeIn INT,Timeout INT)")
             await db.commit()
             await ctx.send("file made oh lord")
@@ -169,34 +170,34 @@ class Economy(commands.Cog):
             amount = amount * 5
             money = await db.execute("SELECT * FROM economy WHERE UserID = ?", (ctx.author.id,))
             money = await money.fetchone()
-            if money is None:
-                await db.execute("INSERT OR IGNORE INTO economy (UserID,Money,daily)  VALUES (?, ?,?)",(ctx.author.id, 0,0))
-                await db.commit()
-                await ctx.respond("You have no donuts")
-                return
-            if money[1] < amount:
-                await ctx.respond("You don't have enough donuts")
-                return
             
-            money = money[1] - amount
-            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money, ctx.author.id,))
-            await db.commit()
 
 
             Baking = await db.execute("SELECT * FROM Baking WHERE UserID = ?", (ctx.author.id,))
             Baking = await Baking.fetchone()
-            mins = 2
+            mins = random.randint(30, 300)
             #if baking does not exist set userID, amount to 1, and timein to current time and time out to current time + 5 minutes
             if Baking is None:
+                if money is None:
+                    await db.execute("INSERT OR IGNORE INTO economy (UserID,Money,daily)  VALUES (?, ?,?)",(ctx.author.id, 0,0))
+                    await db.commit()
+                    await ctx.respond("You have no donuts")
+                    return
+                if money[1] < amount:
+                    await ctx.respond("You don't have enough donuts")
+                    return
+            
+                moneyset = money[1] - amount
+                await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (moneyset, ctx.author.id,))
+                await db.commit()
                 await db.execute("INSERT OR IGNORE INTO Baking (UserID,Amount_Baking,timein,timeout)  VALUES (?, ?,?,?)",(ctx.author.id, amount,time.time(),time.time() + mins * 60))
                 await db.commit()
                 await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes")
                 return
             #if there is food in the oven and the time to take out is plus or minus from 2 minutes of the current time give the user 1.5x the amount of donuts then remove the collum from the database 
-            if int(Baking[3]) < int(time.time()) + 120 and int(Baking[3]) > int(time.time()) - 120:
-                moneygiving = money[1] + amount * 1.5
-                moneygiving = float(moneygiving)
-                await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (moneygiving, ctx.author.id,))
+            if Baking[3] < time.time() + 120 and Baking[3] > time.time() - 120:
+                amountgiving = Baking[1] * 1.5
+                await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
                 await ctx.respond(f"You have finished baking {amount * 1.5} donuts")
