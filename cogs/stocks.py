@@ -11,17 +11,20 @@ class stocks(commands.Cog):
         self.stock_fluctuator.start()
 
 
-    @commands.slash_command()
+    @commands.command()
     @commands.is_owner()
     async def makefile_stocks(self,ctx):
         async with aiosqlite.connect("datebases/donuts.db") as db:
+            await db.execute("DROP TABLE IF EXISTS stocks")
+            await db.commit()
+            await db.execute("DROP TABLE IF EXISTS User_stocks")
             await db.execute("CREATE TABLE IF NOT EXISTS stocks (Symbol, value Float)")
             await db.commit()
-            await ctx.send("file made oh lord")
             await db.execute("CREATE TABLE IF NOT EXISTS User_stocks (user_id INTEGER,Symbol, num_shares INTEGER,purchase_price Float)")
             await db.commit()
+            await db.execute("CREATE TABLE IF NOT EXISTS server_announcements (server_id INTEGER,channnel_id INTEGER)")
 
-    @commands.slash_command()
+    @commands.command()
     @commands.is_owner()
     async def add_stock(self,ctx,symbol,startvalue):
         async with aiosqlite.connect("datebases/donuts.db") as db:
@@ -41,7 +44,7 @@ class stocks(commands.Cog):
 
 
     @commands.slash_command()
-    async def buy_stocks(self,ctx,stock,amount):
+    async def buy_stocks(self,ctx,stock,amount: int):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             stockdata = await db.execute("SELECT * FROM stocks WHERE Symbol = ?",(stock,))
             stockdata = await stockdata.fetchone()
@@ -95,9 +98,19 @@ class stocks(commands.Cog):
             user_shares = await user_shares.fetchall()
             embed = discord.Embed(title="Your portfolio")
             for i in user_shares:
-                embed.add_field(name=i[1],value=f"Shares: {i[2]} \n Purchase Price: {i[3]}", inline=False)
+                stock = await db.execute("SELECT * FROM stocks WHERE Symbol = ?", (i[1],))
+                stock = await stock.fetchone()
+                embed.add_field(name=i[1],value=f"Shares: {i[2]}  Purchase Price: {i[3]}, Value: {round(float(stock[1]) * float(i[2]),2)}", inline=False)
             await ctx.respond(embed=embed)
 
+    @commands.slash_command()
+    async def stock_server_announcments(self,ctx,channel: discord.TextChannel):
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            await db.execute("INSERT OR IGNORE INTO server_announcements (server_id,channnel_id) VALUES(?,?)",(ctx.guild.id,channel.id,))
+            await db.commit()
+            await ctx.respond(f"I will now send stock updates to {channel.mention}")
+
+   
     @tasks.loop(seconds=10)
     async def stock_fluctuator(self):
         async with aiosqlite.connect("datebases/donuts.db") as db:
@@ -105,9 +118,20 @@ class stocks(commands.Cog):
             datas = await datas.fetchall()
             for data in datas:
                 if random.randint(0,3) != 0:
+                    old_price = data[1]
                     prices = round(data[1] * (1+random.uniform(-0.10,0.10)),2)
                     await db.execute("UPDATE stocks SET value = ? WHERE Symbol = ?", (prices,data[0],))
                     await db.commit()
+                    #open server_announcements and post a announcement to all servers that have a channel set
+                    servers = await db.execute("SELECT * FROM server_announcements")
+                    servers = await servers.fetchall()
+                    for server in servers:
+                        try:
+                            channel = self.client.get_channel(server[1])
+                            await channel.send(f"{data[0]} has changed from {old_price} to {prices} this is a change of {round((prices-old_price)/old_price*100,2)}%")
+                        except:
+                            pass
+
 
 
 def setup(client):
