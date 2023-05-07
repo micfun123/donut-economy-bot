@@ -192,7 +192,7 @@ class Economy(commands.Cog):
                 await db.commit()
                 await db.execute("INSERT OR IGNORE INTO Baking (UserID,Amount_Baking,timein,timeout)  VALUES (?, ?,?,?)",(ctx.author.id, amount,time.time(),time.time() + mins * 60))
                 await db.commit()
-                await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes")
+                await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes. Use /bake again to take them out of the oven")
                 return
             #if there is food in the oven and the time to take out is plus or minus from 2 minutes of the current time give the user 1.5x the amount of donuts then remove the collum from the database 
             if Baking[3] < time.time() + 120 and Baking[3] > time.time() - 120:
