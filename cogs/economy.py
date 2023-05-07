@@ -196,14 +196,14 @@ class Economy(commands.Cog):
                 return
             #if there is food in the oven and the time to take out is plus or minus from 2 minutes of the current time give the user 1.5x the amount of donuts then remove the collum from the database 
             if Baking[3] < time.time() + 120 and Baking[3] > time.time() - 120:
-                amountgiving = Baking[1] * 1.5
+                amountgiving = Baking[1] * 1.25
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
                 await ctx.respond(f"You have finished baking {amount * 1.5} donuts")
                 return
             if Baking[3] < time.time() + 350 and Baking[3] > time.time() - 350:
-                amountgiving = Baking[1] * 1.5
+                amountgiving = Baking[1] * 1.1
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
