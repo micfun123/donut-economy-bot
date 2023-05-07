@@ -15,18 +15,18 @@ client = commands.Bot(case_insensitive=True, command_prefix="!", intents=discord
 async def on_ready():
     # Setting `Playing ` status
     print("we have powered on, I an alive.")
-    await client.change_presence(activity=discord.Game(f"I do art stuff in {len(client.guilds)} servers."))
+    await client.change_presence(activity=discord.Game(f"I do stuff in {len(client.guilds)} servers."))
     print(f"Logged in as {client.user.name} ({client.user.id})")
     
 
 @client.event
 async def on_guild_join(guild):
-    await client.change_presence(activity=discord.Game(f"I do art stuff in {len(client.guilds)} servers."))
+    await client.change_presence(activity=discord.Game(f"I do stuff in {len(client.guilds)} servers."))
     
 
 @client.event
 async def on_guild_remove(guild):
-    await client.change_presence(activity=discord.Game(f"I do art stuff in {len(client.guilds)} servers."))
+    await client.change_presence(activity=discord.Game(f"I do stuff in {len(client.guilds)} servers."))
     
 
 TOKEN = os.getenv("DISCORD_TOKEN")
