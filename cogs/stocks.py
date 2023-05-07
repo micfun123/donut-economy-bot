@@ -65,6 +65,38 @@ class stocks(commands.Cog):
                 await db.execute("INSERT OR IGNORE INTO User_stocks (Symbol,num_shares,user_id,purchase_price) VALUES(?,?,?,?)",(stock,amount,ctx.author.id,total,))
                 await db.commit()
 
+    @commands.slash_command()
+    async def sell_stocks(self, ctx, stock, amount: int):
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            stockdata = await db.execute("SELECT * FROM stocks WHERE Symbol = ?", (stock,))
+            stockdata = await stockdata.fetchone()
+            user_shares = await db.execute("SELECT * FROM User_stocks WHERE user_id = ? AND Symbol = ?", (ctx.author.id, stock,))
+            user_shares = await user_shares.fetchone()
+            money = await db.execute("SELECT * FROM economy WHERE UserID = ?", (ctx.author.id,))
+            money = await money.fetchone()
+            if user_shares is None or user_shares[2] < amount:
+                await ctx.respond(f"You don't have {amount} shares of {stock}.")
+                return
+            else:
+                account = float(stockdata[1]) * float(amount) + float(money[1])
+                await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (account, ctx.author.id,))
+                new_shares = user_shares[2] - amount
+                if new_shares == 0:
+                    await db.execute("DELETE FROM User_stocks WHERE user_id = ? AND Symbol = ?", (ctx.author.id, stock,))
+                else:
+                    await db.execute("UPDATE User_stocks SET num_shares = ? WHERE user_id = ? AND Symbol = ?", (new_shares, ctx.author.id, stock,))
+                await db.commit()
+                await ctx.respond(f"You have sold {amount} shares of {stock} for {round(float(stockdata[1]) * float(amount), 2)} Donuts. You now have {round(account,2)} Donuts in your account.")
+
+    @commands.slash_command()
+    async def portfolio(self,ctx):
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            user_shares = await db.execute("SELECT * FROM User_stocks WHERE user_id = ?", (ctx.author.id,))
+            user_shares = await user_shares.fetchall()
+            embed = discord.Embed(title="Your portfolio")
+            for i in user_shares:
+                embed.add_field(name=i[1],value=f"Shares: {i[2]} \n Purchase Price: {i[3]}", inline=False)
+            await ctx.respond(embed=embed)
 
     @tasks.loop(seconds=10)
     async def stock_fluctuator(self):
