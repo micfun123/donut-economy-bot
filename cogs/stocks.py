@@ -39,7 +39,7 @@ class stocks(commands.Cog):
             datas = await datas.fetchall()
             embed = discord.Embed(title="Current stock market")
             for i in datas:
-                embed.add_field(name=i[0],value=i[1], inline=False)
+                embed.add_field(name=i[0],value=round(i[1],2), inline=False)
             await ctx.respond(embed=embed)
 
 
@@ -111,8 +111,54 @@ class stocks(commands.Cog):
             await db.commit()
             await ctx.respond(f"I will now send stock updates to {channel.mention}")
 
+    @commands.command()
+    @commands.is_owner()
+    async def change_stock_value(self, ctx, percentage: float, stock=None):
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            if stock:
+                await db.execute("UPDATE stocks SET value = value * (1 + ?) WHERE Symbol = ?", (percentage/100, stock))
+                await db.commit()
+                await ctx.send(f"The value of {stock} has been updated by {percentage}%")
+            else:
+                await db.execute("UPDATE stocks SET value = value * (1 + ?)", (percentage/100,))
+                await db.commit()
+                await ctx.send(f"The value of all stocks has been updated by {percentage}%")
+
+    @commands.slash_command()
+    @commands.has_permissions(administrator=True)
+    async def set_stock_server_announcements(self, ctx, channel: discord.TextChannel):
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            await db.execute("INSERT OR IGNORE INTO server_announcements (server_id, channnel_id) VALUES (?, ?)", (ctx.guild.id, channel.id,))
+            await db.commit()
+
+        try:
+            announcement_channel = await channel.guild.fetch_channel(channel.id)
+            await ctx.respond(f"I will now send stock updates to {announcement_channel.mention}")
+        except discord.NotFound:
+            await ctx.respond(f"Failed to set announcement channel. The specified channel was not found.")
+        except Exception as e:
+            await ctx.respond(f"An error occurred while setting the announcement channel: {e}")
+
+    @commands.command()
+    @commands.is_owner()
+    async def send_stock_updates(self, ctx, message: str):
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            async with db.execute("SELECT channnel_id FROM server_announcements") as cursor:
+                channels = [channel_id[0] for channel_id in await cursor.fetchall()]
+            for channel_id in channels:
+                try:
+                    channel = await self.client.fetch_channel(channel_id)
+                    await channel.send(message)
+                except discord.NotFound:
+                    # Handle the case where the channel has been deleted
+                    pass
+                except Exception as e:
+                    pass
+        await ctx.send(f"Sent message to {len(channels)} channels.")
+
+
    
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=120)
     async def stock_fluctuator(self):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             datas = await db.execute("SELECT * FROM stocks")
@@ -128,10 +174,18 @@ class stocks(commands.Cog):
                     servers = await servers.fetchall()
                     for server in servers:
                         try:
-                            channel = self.client.get_channel(server[1])
-                            await channel.send(f"{data[0]} has changed from {old_price} to {prices} this is a change of {round((prices-old_price)/old_price*100,2)}%")
+                            channel = await self.client.fetch_channel(server[1])
+                            embed = discord.Embed(title="Stock Update", color=discord.Color.green() if prices > old_price else discord.Color.red())
+                            embed.add_field(name="Symbol", value=data[0], inline=False)
+                            embed.add_field(name="Old Price", value=old_price, inline=True)
+                            embed.add_field(name="New Price", value=prices, inline=True)
+                            percentage_change = round((prices-old_price)/old_price*100, 2)
+                            emoji = "🟢" if prices > old_price else "🔴"
+                            embed.add_field(name="Percentage Change", value=f"{emoji} {percentage_change}%", inline=False)
+                            await channel.send(embed=embed)
                         except:
                             pass
+
 
 
 
