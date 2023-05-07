@@ -160,7 +160,7 @@ class stocks(commands.Cog):
 
 
    
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=5)
     async def stock_fluctuator(self):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             datas = await db.execute("SELECT * FROM stocks")
