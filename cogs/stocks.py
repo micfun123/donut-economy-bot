@@ -142,13 +142,14 @@ class stocks(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def send_stock_updates(self, ctx, message: str):
+        embed = discord.Embed(title="MARKET ALERT", description=message, color=discord.Color.blue())
         async with aiosqlite.connect("datebases/donuts.db") as db:
             async with db.execute("SELECT channnel_id FROM server_announcements") as cursor:
                 channels = [channel_id[0] for channel_id in await cursor.fetchall()]
             for channel_id in channels:
                 try:
                     channel = await self.client.fetch_channel(channel_id)
-                    await channel.send(message)
+                    await channel.send(embed=embed)
                 except discord.NotFound:
                     # Handle the case where the channel has been deleted
                     pass
@@ -157,8 +158,9 @@ class stocks(commands.Cog):
         await ctx.send(f"Sent message to {len(channels)} channels.")
 
 
+
    
-    @tasks.loop(seconds=120)
+    @tasks.loop(minutes=15)
     async def stock_fluctuator(self):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             datas = await db.execute("SELECT * FROM stocks")
