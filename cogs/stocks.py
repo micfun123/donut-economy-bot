@@ -30,7 +30,7 @@ class stocks(commands.Cog):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             await db.execute("INSERT OR IGNORE INTO stocks (Symbol,value) VALUES(?,?)",(symbol,startvalue))
             await db.commit()
-            await ctx.respond(f" I have added {symbol} to the database with a starting value of {startvalue} Donuts")
+            await ctx.send(f" I have added {symbol} to the database with a starting value of {startvalue} Donuts")
 
     @commands.slash_command()
     async def preview_stocks(self,ctx):
@@ -104,7 +104,8 @@ class stocks(commands.Cog):
             await ctx.respond(embed=embed)
 
     @commands.slash_command()
-    async def stock_server_announcments(self,ctx,channel: discord.TextChannel):
+    @commands.has_permissions(administrator=True)
+    async def set_stock_server_announcments(self,ctx,channel: discord.TextChannel):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             await db.execute("INSERT OR IGNORE INTO server_announcements (server_id,channnel_id) VALUES(?,?)",(ctx.guild.id,channel.id,))
             await db.commit()
