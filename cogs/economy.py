@@ -153,9 +153,9 @@ class Economy(commands.Cog):
                         if result == "tie":
                             await ctx.respond(f"Bot chose {bot_choice}. It's a tie!")
                         elif result == "win":
-                            await ctx.respond(f"Bot chose {bot_choice}. You won {int(amount * 1.5)} donuts! Your new balance is {new_balance}.")
+                            await ctx.respond(f"Bot chose {bot_choice}. You won {int(amount * 1.5)} donuts! Your new balance is {new_balance + int(amount * 1.5)}.")
                         else:
-                            await ctx.respond(f"Bot chose {bot_choice}. You lost {amount} donuts. Your new balance is {new_balance}.")
+                            await ctx.respond(f"Bot chose {bot_choice}. You lost {amount} donuts. Your new balance is {new_balance - amount}.")
 
 
     @commands.slash_command()
