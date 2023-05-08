@@ -171,7 +171,7 @@ class Economy(commands.Cog):
 
             Baking = await db.execute("SELECT * FROM Baking WHERE UserID = ?", (ctx.author.id,))
             Baking = await Baking.fetchone()
-            mins = random.randint(30, 300)
+            mins = random.randint(30, 120)
             #if baking does not exist set userID, amount to 1, and timein to current time and time out to current time + 5 minutes
             if Baking is None:
                 if money is None:
@@ -196,14 +196,14 @@ class Economy(commands.Cog):
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
-                await ctx.respond(f"You have finished baking {amount * 1.5} donuts")
+                await ctx.respond(f"You have finished baking {Baking[1] * 1.5} donuts")
                 return
             if Baking[3] < time.time() + 350 and Baking[3] > time.time() - 350:
                 amountgiving = Baking[1] * 1.1
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
-                await ctx.respond(f"You have finished baking but you just missed the perfect moment. You made {amount * 1.2} donuts")
+                await ctx.respond(f"You have finished baking but you just missed the perfect moment. You made {Baking[1] * 1.2} donuts")
                 return
             #if the food is taken out to soon give the user nothing and remove the collum from the database. Tell them they took it out to soon
             if Baking[3] > time.time():
