@@ -168,7 +168,7 @@ class Economy(commands.Cog):
 
     @commands.slash_command()
     async def bake(self,ctx):
-        async with aiosqlite.connect("datebases\donuts.db") as db:
+        async with aiosqlite.connect("datebases/donuts.db") as db:
             amount = 1
             amount = amount * 5
             money = await db.execute("SELECT * FROM economy WHERE UserID = ?", (ctx.author.id,))
