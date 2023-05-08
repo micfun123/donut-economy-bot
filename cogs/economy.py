@@ -245,7 +245,7 @@ class Economy(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def force_add(self,ctx, user: discord.Member, amount: int):
-        async with aiosqlite.connect("datebases\donuts.db") as db:
+        async with aiosqlite.connect("datebases/donuts.db") as db:
             data = await db.execute("SELECT * FROM economy WHERE UserID = ?", (user.id,))
             data = await data.fetchone()
             await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (amount, user.id,))
