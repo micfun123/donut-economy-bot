@@ -47,8 +47,9 @@ class Economy(commands.Cog):
                await ctx.respond("You have claimed your daily and now have 5 Donuts 🍩")
             else:
                 if time.time() - data[2] >= 86400:
-                    await db.execute("UPDATE economy SET Money = ?,daily =? WHERE UserID = ?",(data[1] + 5,time.time(), ctx.author.id))
-                    await ctx.respond(f"You have claimed your daily and now have {data[1] + 5} 🍩")
+                    dailyadding = random.randint(5, 10)
+                    await db.execute("UPDATE economy SET Money = ?,daily =? WHERE UserID = ?",(data[1] + dailyadding,time.time(), ctx.author.id))
+                    await ctx.respond(f"You have claimed your daily and now have {data[1] + dailyadding} 🍩")
                     await db.commit()
                 else:
                     await ctx.respond(f"You have to wait {round(int(86400 - (time.time() - data[2]))/3600,2)} hours to claim your daily 🍩")
@@ -108,14 +109,6 @@ class Economy(commands.Cog):
                 await msg.edit(content="Transaction cancelled.")
             await msg.clear_reactions()
 
-            #if data is None:
-            #    await db.execute("INSERT OR IGNORE INTO economy (UserID,Money,daily)  VALUES (?, ?,?)",(user.id, amount,0))
-            #    await db.commit()
-            #    await ctx.respond(f"You have given {user} {amount} Donuts 🍩")
-            #else:
-            #    await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?",(data[1] + amount,user.id))
-            #    await db.commit()
-            #    await ctx.respond(f"You have given {user} {amount} Donuts 🍩")
 
 
     @commands.slash_command()
