@@ -119,10 +119,44 @@ class stocks(commands.Cog):
                 await db.execute("UPDATE stocks SET value = value * (1 + ?) WHERE Symbol = ?", (percentage/100, stock))
                 await db.commit()
                 await ctx.send(f"The value of {stock} has been updated by {percentage}%")
+                channel = await db.execute("SELECT * FROM server_announcements WHERE server_id = ?", (ctx.guild.id,))
+                channel = await channel.fetchone()
+                if channel is not None:
+                    try:
+                        servers = await db.execute("SELECT * FROM server_announcements")
+                        servers = await servers.fetchall()
+                        for server in servers:
+                            try:
+                                channel = await self.client.fetch_channel(server[1])
+                                embed = discord.Embed(title="Stock Update", color=discord.Color.green() if percentage > 0 else discord.Color.red())
+                                embed.add_field(name="Stock", value=stock)
+                                embed.add_field(name="Percentage", value=f"{percentage}%")
+                                await channel.send(embed=embed)
+                            except discord.NotFound:
+                                pass
+                            except Exception as e:
+                                print(e)
+                    except Exception as e:
+                        print(e)
+
             else:
                 await db.execute("UPDATE stocks SET value = value * (1 + ?)", (percentage/100,))
                 await db.commit()
                 await ctx.send(f"The value of all stocks has been updated by {percentage}%")
+            
+                servers = await db.execute("SELECT * FROM server_announcements")
+                servers = await servers.fetchall()
+                for server in servers:
+                    try:
+                        channel = await self.client.fetch_channel(server[1])
+                        embed = discord.Embed(title="ALL Stock Update", color=discord.Color.green() if percentage > 0 else discord.Color.red())
+                        embed.add_field(name="Percentage", value=f"{percentage}%")
+                        await channel.send(embed=embed)
+                    except discord.NotFound:
+                        pass
+                    except Exception as e:
+                        print(e)
+                    
 
     @commands.slash_command()
     @commands.has_permissions(administrator=True)

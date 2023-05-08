@@ -152,8 +152,7 @@ class Economy(commands.Cog):
                             await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (new_balance, ctx.author.id,))
                             await db.commit()
                         if result == "lose":
-                            new_balance - amount
-                            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (new_balance, ctx.author.id,))
+                            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] - amount, ctx.author.id,))
                             await db.commit()
 
                         
@@ -161,16 +160,15 @@ class Economy(commands.Cog):
                         if result == "tie":
                             await ctx.respond(f"Bot chose {bot_choice}. It's a tie!")
                         elif result == "win":
-                            await ctx.respond(f"Bot chose {bot_choice}. You won {int(amount * 1.5)} donuts! Your new balance is {new_balance}.")
+                            await ctx.respond(f"Bot chose {bot_choice}. You won {int(amount * 1.5)} donuts! Your new balance is {new_balance + int(amount * 1.5)}.")
                         else:
-                            await ctx.respond(f"Bot chose {bot_choice}. You lost {amount} donuts. Your new balance is {new_balance}.")
+                            await ctx.respond(f"Bot chose {bot_choice}. You lost {amount} donuts. Your new balance is {new_balance - amount}.")
 
 
     @commands.slash_command()
     async def bake(self,ctx):
         async with aiosqlite.connect("datebases/donuts.db") as db:
-            amount = 1
-            amount = amount * 5
+            
             money = await db.execute("SELECT * FROM economy WHERE UserID = ?", (ctx.author.id,))
             money = await money.fetchone()
             
@@ -178,7 +176,7 @@ class Economy(commands.Cog):
 
             Baking = await db.execute("SELECT * FROM Baking WHERE UserID = ?", (ctx.author.id,))
             Baking = await Baking.fetchone()
-            mins = random.randint(30, 300)
+            mins = random.randint(30, 90)
             #if baking does not exist set userID, amount to 1, and timein to current time and time out to current time + 5 minutes
             if Baking is None:
                 if money is None:
@@ -186,6 +184,26 @@ class Economy(commands.Cog):
                     await db.commit()
                     await ctx.respond("You have no donuts")
                     return
+                
+                #ask the user how many donuts they want to bake
+                await ctx.respond("How many donuts batch do you want to bake? note it costs 5 donuts to bake 1 batch")
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+                msg = await self.client.wait_for("message", check=check)
+                amount = msg.content
+                
+                if amount.isnumeric() == False:
+                    await ctx.respond("You can only bake a number")
+                    return
+                amount = int(amount)
+                if amount <= 0:
+                    await ctx.respond("You can't bake a negative amount or nothing")
+                    return
+                if amount > 100:
+                    await ctx.respond("You can't bake more than 100 donuts at a time")
+                    return
+
+                amount = amount * 5
                 if money[1] < amount:
                     await ctx.respond("You don't have enough donuts")
                     return
@@ -195,22 +213,22 @@ class Economy(commands.Cog):
                 await db.commit()
                 await db.execute("INSERT OR IGNORE INTO Baking (UserID,Amount_Baking,timein,timeout)  VALUES (?, ?,?,?)",(ctx.author.id, amount,time.time(),time.time() + mins * 60))
                 await db.commit()
-                await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes. Use /bake again to take them out of the oven")
+                await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes. Use /bake again to take them out of the oven \n if you take them out of the oven on time you make 50% more donuts. If you take then out with in 10 minutes you make 20% more donuts")
                 return
             #if there is food in the oven and the time to take out is plus or minus from 2 minutes of the current time give the user 1.5x the amount of donuts then remove the collum from the database 
-            if Baking[3] < time.time() + 120 and Baking[3] > time.time() - 120:
-                amountgiving = Baking[1] * 1.25
+            if Baking[3] < time.time() + 5*60 and Baking[3] > time.time() - 5*60:
+                amountgiving = Baking[1] * 1.5
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
-                await ctx.respond(f"You have finished baking {amount * 1.5} donuts")
+                await ctx.respond(f"You have finished baking {Baking[1] * 1.5} donuts")
                 return
-            if Baking[3] < time.time() + 350 and Baking[3] > time.time() - 350:
+            if Baking[3] < time.time() + 10*60 and Baking[3] > time.time() - 10*60:
                 amountgiving = Baking[1] * 1.1
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
-                await ctx.respond(f"You have finished baking but you just missed the perfect moment. You made {amount * 1.2} donuts")
+                await ctx.respond(f"You have finished baking but you just missed the perfect moment. You made {Baking[1] * 1.1} donuts")
                 return
             #if the food is taken out to soon give the user nothing and remove the collum from the database. Tell them they took it out to soon
             if Baking[3] > time.time():
@@ -268,7 +286,7 @@ class Economy(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def force_add(self,ctx, user: discord.Member, amount: int):
-        async with aiosqlite.connect("datebases\donuts.db") as db:
+        async with aiosqlite.connect("datebases/donuts.db") as db:
             data = await db.execute("SELECT * FROM economy WHERE UserID = ?", (user.id,))
             data = await data.fetchone()
             await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (amount, user.id,))
