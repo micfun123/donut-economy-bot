@@ -210,7 +210,7 @@ class Economy(commands.Cog):
                 return
             #if there is food in the oven and the time to take out is plus or minus from 2 minutes of the current time give the user 1.5x the amount of donuts then remove the collum from the database 
             if Baking[3] < time.time() + 5*60 and Baking[3] > time.time() - 5*60:
-                amountgiving = Baking[1] * 1.25
+                amountgiving = Baking[1] * 1.5
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
@@ -221,7 +221,7 @@ class Economy(commands.Cog):
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
                 await db.commit()
-                await ctx.respond(f"You have finished baking but you just missed the perfect moment. You made {Baking[1] * 1.2} donuts")
+                await ctx.respond(f"You have finished baking but you just missed the perfect moment. You made {Baking[1] * 1.1} donuts")
                 return
             #if the food is taken out to soon give the user nothing and remove the collum from the database. Tell them they took it out to soon
             if Baking[3] > time.time():
