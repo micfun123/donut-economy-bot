@@ -20,7 +20,6 @@ class Economy(commands.Cog):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             await db.execute("CREATE TABLE IF NOT EXISTS economy (UserID INT, Money Float, Daily INT)")
             await db.commit()
-            await db.execute("Drop TABLE IF EXISTS Baking")
             await db.execute("CREATE TABLE IF NOT EXISTS Baking (UserID INT, Amount_Baking,TimeIn INT,Timeout INT)")
             await db.commit()
             await db.execute("ALTER TABLE economy ADD COLUMN lastvoted INT")
