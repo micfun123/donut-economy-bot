@@ -145,8 +145,7 @@ class Economy(commands.Cog):
                             await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (new_balance, ctx.author.id,))
                             await db.commit()
                         if result == "lose":
-                            new_balance - amount
-                            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (new_balance, ctx.author.id,))
+                            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] - amount, ctx.author.id,))
                             await db.commit()
 
                         
