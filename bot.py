@@ -28,6 +28,9 @@ async def on_guild_join(guild):
 async def on_guild_remove(guild):
     await client.change_presence(activity=discord.Game(f"I do stuff in {len(client.guilds)} servers."))
     
+@client.slash_command()
+async def donate(ctx):
+    await ctx.respond("If you feel like buying me a donut it would be greatly appreciated. <https://www.buymeacoffee.com/Michaelrbparker>")
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
