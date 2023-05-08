@@ -162,8 +162,7 @@ class Economy(commands.Cog):
     @commands.slash_command()
     async def bake(self,ctx):
         async with aiosqlite.connect("datebases/donuts.db") as db:
-            amount = 1
-            amount = amount * 5
+            
             money = await db.execute("SELECT * FROM economy WHERE UserID = ?", (ctx.author.id,))
             money = await money.fetchone()
             
@@ -179,6 +178,26 @@ class Economy(commands.Cog):
                     await db.commit()
                     await ctx.respond("You have no donuts")
                     return
+                
+                #ask the user how many donuts they want to bake
+                await ctx.respond("How many donuts batch do you want to bake? note it costs 5 donuts to bake 1 batch")
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+                msg = await self.client.wait_for("message", check=check)
+                amount = msg.content
+                
+                if amount.isnumeric() == False:
+                    await ctx.respond("You can only bake a number")
+                    return
+                amount = int(amount)
+                if amount <= 0:
+                    await ctx.respond("You can't bake a negative amount or nothing")
+                    return
+                if amount > 100:
+                    await ctx.respond("You can't bake more than 100 donuts at a time")
+                    return
+
+                amount = amount * 5
                 if money[1] < amount:
                     await ctx.respond("You don't have enough donuts")
                     return
@@ -188,7 +207,7 @@ class Economy(commands.Cog):
                 await db.commit()
                 await db.execute("INSERT OR IGNORE INTO Baking (UserID,Amount_Baking,timein,timeout)  VALUES (?, ?,?,?)",(ctx.author.id, amount,time.time(),time.time() + mins * 60))
                 await db.commit()
-                await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes. Use /bake again to take them out of the oven")
+                await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes. Use /bake again to take them out of the oven \n if you take them out of the oven on time you make 50% more donuts. If you take then out with in 10 minutes you make 20% more donuts")
                 return
             #if there is food in the oven and the time to take out is plus or minus from 2 minutes of the current time give the user 1.5x the amount of donuts then remove the collum from the database 
             if Baking[3] < time.time() + 120 and Baking[3] > time.time() - 120:
