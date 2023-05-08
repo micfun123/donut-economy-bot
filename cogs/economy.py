@@ -146,14 +146,17 @@ class Economy(commands.Cog):
                         else:
                             result = "lose"
 
-                        new_balance = data[1] - amount
+                        new_balance = data[1]
                         if result == "win":
                             new_balance += int(amount * 1.5)
-                        if result == "tie":
-                            new_balance + amount
+                            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (new_balance, ctx.author.id,))
+                            await db.commit()
+                        if result == "lose":
+                            new_balance - amount
+                            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (new_balance, ctx.author.id,))
+                            await db.commit()
 
-                        await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (new_balance, ctx.author.id,))
-                        await db.commit()
+                        
 
                         if result == "tie":
                             await ctx.respond(f"Bot chose {bot_choice}. It's a tie!")
