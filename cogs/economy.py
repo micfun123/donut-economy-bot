@@ -269,6 +269,7 @@ class Economy(commands.Cog):
             if data[3] is None:
                 cash = random.randint(10, 20)
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + cash, ctx.author.id,))
+                await db.commit()
                 await db.execute("UPDATE economy SET lastvoted = ? WHERE UserID = ?", (time.time(), ctx.author.id,))
                 await db.commit()
                 await ctx.respond(f"You have voted and recieved {cash} donuts",ephemeral=True)
