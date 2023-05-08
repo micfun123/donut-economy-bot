@@ -266,6 +266,14 @@ class Economy(commands.Cog):
                 await db.execute("INSERT OR IGNORE INTO economy (UserID,Money,daily,lastvoted)  VALUES (?, ?,?,?)",(ctx.author.id, 0,0,0))
                 return
             #is the user has already voted in the last 24 hours tell them they have already voted if not give them 10 donuts and set last voted to current time
+            if data[3] is None:
+                cash = random.randint(10, 20)
+                await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + cash, ctx.author.id,))
+                await db.execute("UPDATE economy SET lastvoted = ? WHERE UserID = ?", (time.time(), ctx.author.id,))
+                await db.commit()
+                await ctx.respond(f"You have voted and recieved {cash} donuts",ephemeral=True)
+                return
+
             if data[3] > time.time() - 86400:
                 await ctx.respond("You have already voted in the last 24 hours",ephemeral=True)
                 return
