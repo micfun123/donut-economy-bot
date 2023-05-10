@@ -4,6 +4,11 @@ import random
 import aiosqlite
 import time
 import asyncio
+import requests
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 class Economy(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -15,8 +20,9 @@ class Economy(commands.Cog):
         async with aiosqlite.connect("datebases/donuts.db") as db:
             await db.execute("CREATE TABLE IF NOT EXISTS economy (UserID INT, Money Float, Daily INT)")
             await db.commit()
-            await db.execute("Drop TABLE IF EXISTS Baking")
             await db.execute("CREATE TABLE IF NOT EXISTS Baking (UserID INT, Amount_Baking,TimeIn INT,Timeout INT)")
+            await db.commit()
+            await db.execute("ALTER TABLE economy ADD COLUMN lastvoted INT")
             await db.commit()
             await ctx.send("file made oh lord")
 
@@ -238,8 +244,51 @@ class Economy(commands.Cog):
             
             
 
+    @commands.slash_command()
+    async def vote(self,ctx):
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            tocken = os.getenv("TOPGG_TOKEN")
+            api = requests.get(f"https://top.gg/api/bots/902240397273743361/check?userId={ctx.author.id}", headers={"Authorization": tocken, "Content-Type": "application/json"})
+            data = api.json()
+            print(api)
+            print(data)
+            voted = data["voted"]
+            #if the api does not return a 200 status code
+            if api.status_code != 200:
+                voted = 1
+                print("api error")
+            if voted == 0:
+                await ctx.respond("You need to have voted for simplex in the last 24 hours to claim these coins. Please vote and then try again, you can vote here: https://top.gg/bot/902240397273743361/vote",ephemeral=True)
+                return
+            data = await db.execute("SELECT * FROM economy WHERE UserID = ?", (ctx.author.id,))
+            data = await data.fetchone()
+            if data is None:
+                await db.execute("INSERT OR IGNORE INTO economy (UserID,Money,daily,lastvoted)  VALUES (?, ?,?,?)",(ctx.author.id, 0,0,0))
+                return
+            #is the user has already voted in the last 24 hours tell them they have already voted if not give them 10 donuts and set last voted to current time
+            if data[3] is None:
+                cash = random.randint(10, 20)
+                await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + cash, ctx.author.id,))
+                await db.commit()
+                await db.execute("UPDATE economy SET lastvoted = ? WHERE UserID = ?", (time.time(), ctx.author.id,))
+                await db.commit()
+                await ctx.respond(f"You have voted and recieved {cash} donuts",ephemeral=True)
+                return
 
+            if data[3] > time.time() - 86400:
+                await ctx.respond("You have already voted in the last 24 hours",ephemeral=True)
+                return
+            cash = random.randint(10, 20)
+            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + cash, ctx.author.id,))
+            await db.execute("UPDATE economy SET lastvoted = ? WHERE UserID = ?", (time.time(), ctx.author.id,))
+            await db.commit()
+            await ctx.respond(f"You have voted and recieved {cash} donuts",ephemeral=True)
+            return
+        
+        
             
+
+        
 
 
     @commands.command()
