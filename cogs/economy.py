@@ -81,7 +81,7 @@ class Economy(commands.Cog):
             if amount <= 0:
                 await ctx.respond("You cant send a negative amount")
                 return
-            if userfrom[1] <= amount:
+            if userfrom[1] < amount:
                 await ctx.respond("You dont have enough money to send that")
                 return
             await ctx.respond(f"Transaction protocol starting... ", ephemeral=True)
@@ -169,7 +169,7 @@ class Economy(commands.Cog):
 
             Baking = await db.execute("SELECT * FROM Baking WHERE UserID = ?", (ctx.author.id,))
             Baking = await Baking.fetchone()
-            mins = random.randint(30, 90)
+            mins = random.randint(30, 180)
             #if baking does not exist set userID, amount to 1, and timein to current time and time out to current time + 5 minutes
             if Baking is None:
                 if money is None:
@@ -209,7 +209,7 @@ class Economy(commands.Cog):
                 await ctx.respond(f"You have started baking {amount} donuts they will be done in {mins} minutes. Use /bake again to take them out of the oven \n if you take them out of the oven on time you make 50% more donuts. If you take then out with in 10 minutes you make 20% more donuts")
                 return
             #if there is food in the oven and the time to take out is plus or minus from 2 minutes of the current time give the user 1.5x the amount of donuts then remove the collum from the database 
-            if Baking[3] < time.time() + 5*60 and Baking[3] > time.time() - 5*60:
+            if Baking[3] < time.time() + 2*60 and Baking[3] > time.time() - 2*60:
                 amountgiving = Baking[1] * 1.5
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (money[1] + amountgiving, ctx.author.id,))
                 await db.execute("DELETE FROM Baking WHERE UserID = ?", (ctx.author.id,))
