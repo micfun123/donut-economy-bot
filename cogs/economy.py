@@ -479,12 +479,12 @@ class Economy(commands.Cog):
             (3, "red"),
             (26, "black"),
         ]
-    
+
         async with aiosqlite.connect("datebases/donuts.db") as db:
             if amount < 1:
                 await ctx.respond("You need to bet more than 1 donut", ephemeral=True)
                 return
-    
+
             data = await db.execute("SELECT * FROM economy WHERE UserID = ?", (userid,))
             data = await data.fetchone()
             if data is None:
@@ -494,15 +494,16 @@ class Economy(commands.Cog):
                 )
                 await ctx.respond("You don't have any donuts", ephemeral=True)
                 return
-    
+
             if data[1] < amount:
                 await ctx.respond("You don't have enough donuts", ephemeral=True)
                 return
-    
-            if option.lower() not in ["red", "black", "green"]:
-                await ctx.respond("You need to pick red, black, or green", ephemeral=True)
+
+            option = option.lower()
+            if option not in ["red", "black", "green"] and not option.isdigit():
+                await ctx.respond("You need to pick a valid color or number", ephemeral=True)
                 return
-    
+
             await db.execute(
                 "UPDATE economy SET Money = ? WHERE UserID = ?",
                 (
@@ -511,41 +512,55 @@ class Economy(commands.Cog):
                 ),
             )
             await db.commit()
-    
+
             # Perform the roulette spin animation
             await ctx.respond("Spinning the roulette wheel...")
             await asyncio.sleep(3)  # Wait for 3 seconds for the animation
-    
+
             # Simulate the spinning and landing on a result
             result = random.choice(roulette_wheel)
             await asyncio.sleep(2)  # Wait for 2 seconds for the animation to stop
-    
-            if result[1] == option:
-                if option == "green":
+
+            if option.isdigit():
+                if int(option) == result[0]:
                     await db.execute(
                         "UPDATE economy SET Money = ? WHERE UserID = ?",
                         (
-                            data[1] + amount * 10,
+                            data[1] + amount * 36,
                             userid,
                         ),
                     )
                     await db.commit()
-                    await ctx.respond(f"You won {amount * 14} donuts")
-                    return
+                    await ctx.respond(f"You won {amount * 10} donuts! 🎉")
                 else:
-                    await db.execute(
-                        "UPDATE economy SET Money = ? WHERE UserID = ?",
-                        (
-                            data[1] + amount * 2,
-                            userid,
-                        ),
-                    )
-                    await db.commit()
-                    await ctx.respond(f"You won {amount * 2} donuts")
-                    return
+                    await ctx.respond(f"You lost {amount} donuts! 😢")
             else:
-                await ctx.respond(f"You lost {amount} donuts")
-                return
+                if result[1] == option:
+                    if option == "green":
+                        await db.execute(
+                            "UPDATE economy SET Money = ? WHERE UserID = ?",
+                            (
+                                data[1] + amount * 10,
+                                userid,
+                            ),
+                        )
+                        await db.commit()
+                        await ctx.respond(f"You won {amount * 10} donuts")
+                        return
+                    else:
+                        await db.execute(
+                            "UPDATE economy SET Money = ? WHERE UserID = ?",
+                            (
+                                data[1] + amount * 2,
+                                userid,
+                            ),
+                        )
+                        await db.commit()
+                        await ctx.respond(f"You won {amount * 2} donuts")
+                        return
+                else:
+                    await ctx.respond(f"You lost {amount} donuts")
+                    return
 
     @commands.command()
     @commands.is_owner()
