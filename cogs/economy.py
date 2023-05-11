@@ -288,7 +288,55 @@ class Economy(commands.Cog):
         
         
             
-
+    @commands.slash_command()
+    async def roulette(self,ctx, option: str, amount: int):
+        userid = ctx.author.id
+        roulette_wheel = [
+        (0, "green"), (32, "red"), (15, "black"), (19, "red"), (4, "black"), (21, "red"), (2, "black"), (25, "red"),
+        (17, "black"), (34, "red"), (6, "black"), (27, "red"), (13, "black"), (36, "red"), (11, "black"), (30, "red"),
+        (8, "black"), (23, "red"), (10, "black"), (5, "red"), (24, "black"), (16, "red"), (33, "black"), (1, "red"),
+        (20, "black"), (14, "red"), (31, "black"), (9, "red"), (22, "black"), (18, "red"), (29, "black"), (7, "red"),
+        (28, "black"), (12, "red"), (35, "black"), (3, "red"), (26, "black")
+    ]
+        async with aiosqlite.connect("datebases/donuts.db") as db:
+            if amount < 1:
+                await ctx.respond("You need to bet more then 1 donut",ephemeral=True)
+                return
+            data = await db.execute("SELECT * FROM economy WHERE UserID = ?", (userid,))
+            data = await data.fetchone()
+            if data is None:
+                await db.execute("INSERT OR IGNORE INTO economy (UserID,Money,daily,lastvoted)  VALUES (?, ?,?,?)",(userid, 0,0,0))
+                await ctx.respond("You dont have any donuts",ephemeral=True)
+                return
+            if data[1] < amount:
+                await ctx.respond("You dont have enough donuts",ephemeral=True)
+                return
+            if option.lower() == "red":
+                option = "red"
+            elif option.lower() == "black":
+                option = "black"
+            elif option.lower() == "green":
+                option = "green"
+            else:
+                await ctx.respond("You need to pick red, black or green",ephemeral=True)
+                return
+            await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] - amount, userid,))
+            await db.commit()
+            result = random.choice(roulette_wheel)
+            if result[1] == option:
+                if option == "green":
+                    await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + amount * 10, userid,))
+                    await db.commit()
+                    await ctx.respond(f"You won {amount * 14} donuts")
+                    return
+                else:
+                    await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + amount * 2, userid,))
+                    await db.commit()
+                    await ctx.respond(f"You won {amount * 2} donuts")
+                    return
+            else:
+                await ctx.respond(f"You lost {amount} donuts")
+                return
         
 
 
