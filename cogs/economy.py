@@ -479,11 +479,12 @@ class Economy(commands.Cog):
             (3, "red"),
             (26, "black"),
         ]
-
+    
         async with aiosqlite.connect("datebases/donuts.db") as db:
             if amount < 1:
-                await ctx.respond("You need to bet more then 1 donut", ephemeral=True)
+                await ctx.respond("You need to bet more than 1 donut", ephemeral=True)
                 return
+    
             data = await db.execute("SELECT * FROM economy WHERE UserID = ?", (userid,))
             data = await data.fetchone()
             if data is None:
@@ -491,22 +492,17 @@ class Economy(commands.Cog):
                     "INSERT OR IGNORE INTO economy (UserID,Money,daily,lastvoted)  VALUES (?, ?,?,?)",
                     (userid, 0, 0, 0),
                 )
-                await ctx.respond("You dont have any donuts", ephemeral=True)
+                await ctx.respond("You don't have any donuts", ephemeral=True)
                 return
+    
             if data[1] < amount:
-                await ctx.respond("You dont have enough donuts", ephemeral=True)
+                await ctx.respond("You don't have enough donuts", ephemeral=True)
                 return
-            if option.lower() == "red":
-                option = "red"
-            elif option.lower() == "black":
-                option = "black"
-            elif option.lower() == "green":
-                option = "green"
-            else:
-                await ctx.respond(
-                    "You need to pick red, black or green", ephemeral=True
-                )
+    
+            if option.lower() not in ["red", "black", "green"]:
+                await ctx.respond("You need to pick red, black, or green", ephemeral=True)
                 return
+    
             await db.execute(
                 "UPDATE economy SET Money = ? WHERE UserID = ?",
                 (
@@ -515,7 +511,15 @@ class Economy(commands.Cog):
                 ),
             )
             await db.commit()
+    
+            # Perform the roulette spin animation
+            await ctx.respond("Spinning the roulette wheel...")
+            await asyncio.sleep(3)  # Wait for 3 seconds for the animation
+    
+            # Simulate the spinning and landing on a result
             result = random.choice(roulette_wheel)
+            await asyncio.sleep(2)  # Wait for 2 seconds for the animation to stop
+    
             if result[1] == option:
                 if option == "green":
                     await db.execute(
