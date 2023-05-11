@@ -72,7 +72,8 @@ class Economy(commands.Cog):
                 user = await self.client.fetch_user(data[i][0])
                 embed.add_field(name=f"{i + 1}. {user}", value=f"{round(data[i][1],2)} Donuts 🍩", inline=False)
             await ctx.respond(embed=embed)
-
+        #get the users money and display it and the total value of there stocks and the total value of there stocks and money 
+        
 
     @commands.slash_command()
     async def send(self, ctx, user: discord.Member, amount: int):
@@ -267,7 +268,7 @@ class Economy(commands.Cog):
                 return
             #is the user has already voted in the last 24 hours tell them they have already voted if not give them 10 donuts and set last voted to current time
             if data[3] is None:
-                cash = random.randint(10, 20)
+                cash = random.randint(5, 20)
                 await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + cash, ctx.author.id,))
                 await db.commit()
                 await db.execute("UPDATE economy SET lastvoted = ? WHERE UserID = ?", (time.time(), ctx.author.id,))
@@ -278,7 +279,7 @@ class Economy(commands.Cog):
             if data[3] > time.time() - 86400:
                 await ctx.respond("You have already voted in the last 24 hours",ephemeral=True)
                 return
-            cash = random.randint(10, 20)
+            cash = random.randint(5, 20)
             await db.execute("UPDATE economy SET Money = ? WHERE UserID = ?", (data[1] + cash, ctx.author.id,))
             await db.execute("UPDATE economy SET lastvoted = ? WHERE UserID = ?", (time.time(), ctx.author.id,))
             await db.commit()
