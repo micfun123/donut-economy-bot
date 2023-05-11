@@ -176,7 +176,7 @@ class Economy(commands.Cog):
 
             Baking = await db.execute("SELECT * FROM Baking WHERE UserID = ?", (ctx.author.id,))
             Baking = await Baking.fetchone()
-            mins = random.randint(30, 130)
+            mins = random.randint(30, 140)
             #if baking does not exist set userID, amount to 1, and timein to current time and time out to current time + 5 minutes
             if Baking is None:
                 if money is None:
