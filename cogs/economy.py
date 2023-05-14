@@ -244,7 +244,7 @@ class Economy(commands.Cog):
                 "SELECT * FROM Baking WHERE UserID = ?", (ctx.author.id,)
             )
             Baking = await Baking.fetchone()
-            mins = random.randint(30, 140)
+            mins = random.randint(30, 120)
             # if baking does not exist set userID, amount to 1, and timein to current time and time out to current time + 5 minutes
             if Baking is None:
                 if money is None:
@@ -274,8 +274,8 @@ class Economy(commands.Cog):
                 if amount <= 0:
                     await ctx.respond("You can't bake a negative amount or nothing")
                     return
-                if amount > 100:
-                    await ctx.respond("You can't bake more than 100 donuts at a time")
+                if amount > 90:
+                    await ctx.respond("You can't bake more than 90 donuts at a time")
                     return
 
                 amount = amount * 5

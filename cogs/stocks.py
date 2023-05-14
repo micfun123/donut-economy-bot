@@ -89,7 +89,8 @@ class stocks(commands.Cog):
                 else:
                     await db.execute("UPDATE User_stocks SET num_shares = ? WHERE user_id = ? AND Symbol = ?", (new_shares, ctx.author.id, stock,))
                 await db.commit()
-                await ctx.respond(f"You have sold {amount} shares of {stock} for {round(float(stockdata[1]) * float(amount), 2)} Donuts. You now have {round(account,2)} Donuts in your account.")
+                await ctx.respond(f"You have sold {amount} shares of {stock} for {round(float(stockdata[1]) * float(amount), 2)} Donuts. You now have {round(float(money[1]) + float(stockdata[1]) * float(amount), 2)} Donuts in your account.")
+
 
     @commands.slash_command()
     async def portfolio(self,ctx):
